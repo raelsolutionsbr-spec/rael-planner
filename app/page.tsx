@@ -139,6 +139,20 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
+// Adicione estes cálculos extras antes do "return" do dashboard:
+
+const empresasProblema = empresasComSaldo
+  .filter((e) => e.status.label !== "Positivo")
+  .map((e) => ({ nome: e.nome, saldo: e.saldo, status: e.status.label }));
+
+const contagemCategorias: Record<string, number> = {};
+tarefasHoje.forEach((t) => {
+  contagemCategorias[t.categoria] = (contagemCategorias[t.categoria] || 0) + 1;
+});
+const categoriaDominante = Object.entries(contagemCategorias).sort((a, b) => b[1] - a[1])[0]?.[0] || "geral";
+
+// Rentabilidade simplificada (você pode buscar de investimentos se quiser mais precisão)
+const rentabilidadePct = 0; // opcional: buscar da tabela investimentos
 
       {/* RESUMO GERAL */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
