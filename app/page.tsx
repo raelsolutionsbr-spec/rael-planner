@@ -1,3 +1,4 @@
+import DicasIA from "@/components/DicasIA";
 "use client";
 
 import { useEffect, useState } from "react";
