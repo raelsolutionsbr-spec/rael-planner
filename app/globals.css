@@ -1,24 +1,48 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 :root {
   --azul-neon: #00c8ff;
   --azul-escuro: #0a1628;
+  --azul-painel: #0f2138;
   --laranja-vibrante: #ff6b35;
-  --azul-gradiente-inicio: #1e3a8a;
-  --azul-gradiente-fim: #00c8ff;
   --verde-sucesso: #22c55e;
   --vermelho-alerta: #ef4444;
   --amarelo-atencao: #f59e0b;
+  --texto-secundario: #94a3b8;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   background: var(--azul-escuro);
   color: #fff;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
+  margin: 0;
 }
 
-.card-gradient {
-  background: linear-gradient(135deg, var(--azul-gradiente-inicio), var(--azul-gradiente-fim));
+.gradiente-logo {
+  background: linear-gradient(135deg, var(--azul-neon), var(--laranja-vibrante));
+}
+
+.card-tech {
+  background: var(--azul-painel);
+  border: 1px solid rgba(0, 200, 255, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 0 25px rgba(0, 200, 255, 0.05);
+  transition: all 0.2s ease;
+}
+
+.card-tech:hover {
+  border-color: rgba(0, 200, 255, 0.4);
+  box-shadow: 0 0 25px rgba(0, 200, 255, 0.15);
+}
+
+.scrollbar-tech::-webkit-scrollbar {
+  width: 6px;
+}
+.scrollbar-tech::-webkit-scrollbar-thumb {
+  background: var(--azul-neon);
+  border-radius: 10px;
 }
