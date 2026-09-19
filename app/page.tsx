@@ -1,9 +1,9 @@
-import DicasIA from "@/components/DicasIA";
 "use client";
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import DicasIA from "@/components/DicasIA";
 
 const diaSemanaMap = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
@@ -41,20 +41,17 @@ export default function DashboardPage() {
     carregarTudo();
   }, []);
 
-  // ---------- CÁLCULOS FINANCEIROS ----------
   const finMes = financeiro.filter((f) => f.data.slice(0, 7) === mesAtual);
   const totalEntradas = finMes.filter((f) => f.tipo === "entrada").reduce((s, f) => s + f.valor, 0);
   const totalSaidas = finMes.filter((f) => f.tipo === "saida").reduce((s, f) => s + f.valor, 0);
   const saldoGeral = totalEntradas - totalSaidas;
   const pctGasto = totalEntradas > 0 ? (totalSaidas / totalEntradas) * 100 : totalSaidas > 0 ? 100 : 0;
 
-  // Saldo pessoal
   const finPessoal = finMes.filter((f) => f.origem === "pessoal");
   const saldoPessoal =
     finPessoal.filter((f) => f.tipo === "entrada").reduce((s, f) => s + f.valor, 0) -
     finPessoal.filter((f) => f.tipo === "saida").reduce((s, f) => s + f.valor, 0);
 
-  // Saldo/status por empresa
   const empresasComSaldo = empresas.map((emp) => {
     const lancs = finMes.filter((f) => f.empresa_id === emp.id);
     const entradas = lancs.filter((f) => f.tipo === "entrada").reduce((s, f) => s + f.valor, 0);
@@ -69,7 +66,6 @@ export default function DashboardPage() {
     return { ...emp, entradas, saidas, saldo, status, pctMeta: emp.meta_mensal > 0 ? (entradas / emp.meta_mensal) * 100 : 0 };
   });
 
-  // ---------- CRM ----------
   const clientesFrios = clientes.filter((c) => {
     if (!c.ultima_interacao) return false;
     const dias = (Date.now() - new Date(c.ultima_interacao).getTime()) / (1000 * 60 * 60 * 24);
@@ -81,11 +77,9 @@ export default function DashboardPage() {
     ativo: clientes.filter((c) => c.status === "ativo").length,
   };
 
-  // ---------- TAREFAS ----------
   const tarefasConcluidas = tarefasHoje.filter((t) => t.concluida_hoje).length;
   const pctTarefas = tarefasHoje.length > 0 ? (tarefasConcluidas / tarefasHoje.length) * 100 : 0;
 
-  // ---------- ALERTAS INTELIGENTES ----------
   const alertas: { tipo: string; cor: string; mensagem: string }[] = [];
 
   if (saldoGeral < 0) {
@@ -122,6 +116,18 @@ export default function DashboardPage() {
     alertas.push({ tipo: "verde", cor: "#22c55e", mensagem: "✅ Tudo em ordem! Nenhum alerta crítico neste momento." });
   }
 
+  const empresasProblema = empresasComSaldo
+    .filter((e) => e.status.label !== "Positivo")
+    .map((e) => ({ nome: e.nome, saldo: e.saldo, status: e.status.label }));
+
+  const contagemCategorias: Record<string, number> = {};
+  tarefasHoje.forEach((t) => {
+    contagemCategorias[t.categoria] = (contagemCategorias[t.categoria] || 0) + 1;
+  });
+  const categoriaDominante = Object.entries(contagemCategorias).sort((a, b) => b[1] - a[1])[0]?.[0] || "geral";
+
+  const rentabilidadePct = 0;
+
   if (loading) return <p className="text-[var(--texto-secundario)]">Carregando dashboard...</p>;
 
   return (
@@ -139,20 +145,21 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
-// Adicione estes cálculos extras antes do "return" do dashboard:
 
-const empresasProblema = empresasComSaldo
-  .filter((e) => e.status.label !== "Positivo")
-  .map((e) => ({ nome: e.nome, saldo: e.saldo, status: e.status.label }));
-
-const contagemCategorias: Record<string, number> = {};
-tarefasHoje.forEach((t) => {
-  contagemCategorias[t.categoria] = (contagemCategorias[t.categoria] || 0) + 1;
-});
-const categoriaDominante = Object.entries(contagemCategorias).sort((a, b) => b[1] - a[1])[0]?.[0] || "geral";
-
-// Rentabilidade simplificada (você pode buscar de investimentos se quiser mais precisão)
-const rentabilidadePct = 0; // opcional: buscar da tabela investimentos
+      <DicasIA
+        totalEntradas={totalEntradas}
+        totalSaidas={totalSaidas}
+        saldoGeral={saldoGeral}
+        pctGasto={pctGasto}
+        empresasProblema={empresasProblema}
+        clientesFrios={clientesFrios.length}
+        leads={funil.lead}
+        negociacao={funil.negociacao}
+        tarefasConcluidas={tarefasConcluidas}
+        tarefasTotal={tarefasHoje.length}
+        categoriaDominante={categoriaDominante}
+        rentabilidadePct={rentabilidadePct}
+      />
 
       {/* RESUMO GERAL */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
@@ -187,7 +194,6 @@ const rentabilidadePct = 0; // opcional: buscar da tabela investimentos
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* CARDS POR EMPRESA */}
         <div className="lg:col-span-2">
           <h2 className="text-lg font-semibold mb-3">🏢 Empresas</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -216,7 +222,6 @@ const rentabilidadePct = 0; // opcional: buscar da tabela investimentos
           </div>
         </div>
 
-        {/* PRÓXIMOS EVENTOS */}
         <div>
           <h2 className="text-lg font-semibold mb-3">📅 Próximos eventos</h2>
           <div className="space-y-3">
@@ -236,7 +241,6 @@ const rentabilidadePct = 0; // opcional: buscar da tabela investimentos
         </div>
       </div>
 
-      {/* TAREFAS DE HOJE */}
       <div className="mt-8">
         <h2 className="text-lg font-semibold mb-3">✅ Tarefas de hoje ({diaHoje})</h2>
         {tarefasHoje.length === 0 ? (
