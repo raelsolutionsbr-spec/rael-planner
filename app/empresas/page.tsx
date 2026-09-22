@@ -52,6 +52,16 @@ export default function EmpresasPage() {
       return;
     }
 
+    // 1. Pega o usuário logado
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      alert("Usuário não autenticado. Faça login novamente.");
+      return;
+    }
+
     if (editando) {
       const { error } = await supabase
         .from("empresas")
@@ -74,6 +84,7 @@ export default function EmpresasPage() {
           tipo: form.tipo,
           cor_tema: form.cor_tema,
           meta_mensal: form.meta_mensal,
+          user_id: user.id,
         },
       ]);
 
@@ -98,7 +109,12 @@ export default function EmpresasPage() {
   }
 
   async function excluirEmpresa(id: string) {
-    if (!confirm("Tem certeza que deseja excluir esta empresa? Isso também remove clientes/lançamentos vinculados.")) return;
+    if (
+      !confirm(
+        "Tem certeza que deseja excluir esta empresa? Isso também remove clientes/lançamentos vinculados."
+      )
+    )
+      return;
 
     const { error } = await supabase.from("empresas").delete().eq("id", id);
     if (error) {
