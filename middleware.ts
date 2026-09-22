@@ -20,9 +20,10 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
+          cookiesToSet.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value);
+            response.cookies.set(name, value, options);
+          });
         },
       },
     }
@@ -37,12 +38,14 @@ export async function middleware(request: NextRequest) {
 
   // Não logado tentando acessar rota privada -> manda pro login
   if (!user && !isPublicRoute) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    const redirectUrl = new URL("/login", request.url);
+    return NextResponse.redirect(redirectUrl);
   }
 
   // Já logado tentando acessar /login -> manda pro Dashboard
   if (user && pathname.startsWith("/login")) {
-    return NextResponse.redirect(new URL("/", request.url));
+    const redirectUrl = new URL("/", request.url);
+    return NextResponse.redirect(redirectUrl);
   }
 
   return response;
