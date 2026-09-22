@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 const menuItems = [
   { href: "/", label: "Dashboard", icon: "📊" },
@@ -16,12 +17,26 @@ const menuItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
 
   // Fecha o menu automaticamente ao navegar (mobile)
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
+
+  async function handleLogout() {
+    const confirmar = confirm("Tem certeza que deseja sair?");
+    if (!confirmar) return;
+
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      alert("Erro ao sair: " + error.message);
+      return;
+    }
+
+    router.push("/login");
+  }
 
   return (
     <>
@@ -85,6 +100,17 @@ export default function Sidebar() {
             );
           })}
         </nav>
+
+        {/* Botão de Logout */}
+        <div className="px-4 pb-2">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 text-sm rounded-lg text-[var(--vermelho-alerta)] hover:bg-[rgba(239,68,68,0.1)] transition-all border border-[rgba(239,68,68,0.2)]"
+          >
+            <span>🚪</span>
+            Sair
+          </button>
+        </div>
 
         <div className="p-4 border-t border-[rgba(0,200,255,0.1)] text-xs text-[var(--texto-secundario)]">
           v1.0 · Rael Solutions
