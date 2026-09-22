@@ -3,6 +3,9 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+// Rotas que NÃO exigem login
+const PUBLIC_ROUTES = ["/login", "/reset-password"];
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request: { headers: request.headers },
@@ -27,9 +30,19 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  // exemplo: protege rotas privadas
-  if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
+  const { pathname } = request.nextUrl;
+  const isPublicRoute = PUBLIC_ROUTES.some((route) =>
+    pathname.startsWith(route)
+  );
+
+  // Não logado tentando acessar rota privada -> manda pro login
+  if (!user && !isPublicRoute) {
     return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  // Já logado tentando acessar /login -> manda pro Dashboard
+  if (user && pathname.startsWith("/login")) {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return response;
