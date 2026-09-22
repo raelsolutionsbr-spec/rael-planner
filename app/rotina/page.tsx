@@ -46,9 +46,20 @@ export default function RotinaPage() {
 
   async function carregarTarefas() {
     setLoading(true);
+
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+
+    if (!userId) {
+      setTarefas([]);
+      setLoading(false);
+      return;
+    }
+
     const { data, error } = await supabase
       .from("tarefas")
       .select("*")
+      .eq("user_id", userId)
       .order("dia_semana")
       .order("horario_inicio");
 
@@ -92,7 +103,17 @@ export default function RotinaPage() {
       const { error } = await supabase.from("tarefas").update(form).eq("id", editando.id);
       if (error) return alert("Erro: " + error.message);
     } else {
-      const { error } = await supabase.from("tarefas").insert([form]);
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+
+      if (!userId) {
+        alert("Usuário não autenticado.");
+        return;
+      }
+
+      const { error } = await supabase
+        .from("tarefas")
+        .insert([{ ...form, user_id: userId }]);
       if (error) return alert("Erro: " + error.message);
     }
 
