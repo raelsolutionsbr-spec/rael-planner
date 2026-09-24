@@ -35,7 +35,7 @@ export default function FinanceiroPage() {
     empresa_id: "",
     tipo: "entrada",
     categoria: "Outros",
-    valor: 0,
+    valor: "", // 🔧 ALTERADO: era 0, agora string vazia
     data: new Date().toISOString().slice(0, 10),
     recorrente: false,
     observacao: "",
@@ -61,7 +61,7 @@ export default function FinanceiroPage() {
       empresa_id: "",
       tipo: "entrada",
       categoria: "Outros",
-      valor: 0,
+      valor: "", // 🔧 ALTERADO
       data: new Date().toISOString().slice(0, 10),
       recorrente: false,
       observacao: "",
@@ -71,11 +71,16 @@ export default function FinanceiroPage() {
 
   async function salvarLancamento(e: React.FormEvent) {
     e.preventDefault();
-    if (form.valor <= 0) return alert("Informe um valor válido.");
+
+    // 🔧 ALTERADO: conversão de valor string (com vírgula) para número
+    const valorConvertido = parseFloat(String(form.valor).replace(",", ".")) || 0;
+
+    if (valorConvertido <= 0) return alert("Informe um valor válido.");
     if (form.origem === "empresarial" && !form.empresa_id) return alert("Selecione a empresa.");
 
     const payload = {
       ...form,
+      valor: valorConvertido, // 🔧 ALTERADO
       empresa_id: form.origem === "empresarial" ? form.empresa_id : null,
     };
 
@@ -98,7 +103,7 @@ export default function FinanceiroPage() {
       empresa_id: l.empresa_id || "",
       tipo: l.tipo,
       categoria: l.categoria,
-      valor: l.valor,
+      valor: String(l.valor ?? ""), // 🔧 ALTERADO: number -> string
       data: l.data.slice(0, 10),
       recorrente: l.recorrente,
       observacao: l.observacao || "",
@@ -128,8 +133,8 @@ export default function FinanceiroPage() {
   }, [lancamentos, filtroMes, filtroOrigem, filtroEmpresa]);
 
   // Totais gerais do mês filtrado
-  const totalEntradas = lancamentosFiltrados.filter((l) => l.tipo === "entrada").reduce((s, l) => s + l.valor, 0);
-  const totalSaidas = lancamentosFiltrados.filter((l) => l.tipo === "saida").reduce((s, l) => s + l.valor, 0);
+  const totalEntradas = lancamentosFiltrados.filter((l) => l.tipo === "entrada").reduce((s, l) => s + Number(l.valor || 0), 0);
+  const totalSaidas = lancamentosFiltrados.filter((l) => l.tipo === "saida").reduce((s, l) => s + Number(l.valor || 0), 0);
   const saldo = totalEntradas - totalSaidas;
 
   // Status do mês (verde/amarelo/vermelho)
@@ -141,8 +146,8 @@ export default function FinanceiroPage() {
   // Saldo por empresa (dentro do mês filtrado, só lançamentos empresariais)
   const saldoPorEmpresa = empresas.map((emp) => {
     const lancsEmp = lancamentos.filter((l) => l.data.slice(0, 7) === filtroMes && l.empresa_id === emp.id);
-    const entradas = lancsEmp.filter((l) => l.tipo === "entrada").reduce((s, l) => s + l.valor, 0);
-    const saidas = lancsEmp.filter((l) => l.tipo === "saida").reduce((s, l) => s + l.valor, 0);
+    const entradas = lancsEmp.filter((l) => l.tipo === "entrada").reduce((s, l) => s + Number(l.valor || 0), 0);
+    const saidas = lancsEmp.filter((l) => l.tipo === "saida").reduce((s, l) => s + Number(l.valor || 0), 0);
     const saldoEmp = entradas - saidas;
     const pctGasto = entradas > 0 ? (saidas / entradas) * 100 : saidas > 0 ? 100 : 0;
 
@@ -235,7 +240,7 @@ export default function FinanceiroPage() {
                       <div className="h-full gradiente-logo" style={{ width: `${Math.min(emp.pctMeta, 100)}%` }} />
                     </div>
                     <p className="text-xs text-[var(--texto-secundario)] mt-1">
-                      {emp.pctMeta.toFixed(0)}% da meta (R$ {emp.meta_mensal.toLocaleString("pt-BR")})
+                      {emp.pctMeta.toFixed(0)}% da meta (R$ {Number(emp.meta_mensal).toLocaleString("pt-BR")})
                     </p>
                   </div>
                 )}
@@ -288,9 +293,15 @@ export default function FinanceiroPage() {
 
         <div>
           <label className="text-sm text-[var(--texto-secundario)] block mb-1">Valor (R$)</label>
-          <input type="text" inputMode="decimal" value={form.valor} ... />
-            onChange={(e) => setForm({ ...form, valor: e.target.value.replace(/[^0-9,]/g, "") })
-            className="w-full bg-[var(--azul-escuro)] border border-[rgba(0,200,255,0.2)] rounded-lg px-3 py-2 text-sm" />
+          {/* 🔧 ALTERADO: input estava quebrado (JSX inválido). Corrigido abaixo */}
+          <input
+            type="text"
+            inputMode="decimal"
+            value={form.valor}
+            onChange={(e) => setForm({ ...form, valor: e.target.value.replace(/[^0-9,]/g, "") })}
+            placeholder="0,00"
+            className="w-full bg-[var(--azul-escuro)] border border-[rgba(0,200,255,0.2)] rounded-lg px-3 py-2 text-sm"
+          />
         </div>
 
         <div>
@@ -345,7 +356,7 @@ export default function FinanceiroPage() {
                 </p>
               </div>
               <p className="font-bold" style={{ color: l.tipo === "entrada" ? "#22c55e" : "#ef4444" }}>
-                {l.tipo === "entrada" ? "+" : "-"} R$ {l.valor.toLocaleString("pt-BR")}
+                {l.tipo === "entrada" ? "+" : "-"} R$ {Number(l.valor || 0).toLocaleString("pt-BR")}
               </p>
               <button onClick={() => iniciarEdicao(l)} className="text-xs px-3 py-1.5 rounded-lg border border-[rgba(0,200,255,0.3)] text-[var(--azul-neon)] hover:bg-[rgba(0,200,255,0.1)] transition">
                 Editar
