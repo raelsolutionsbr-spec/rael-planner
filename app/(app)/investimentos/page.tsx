@@ -31,8 +31,8 @@ export default function InvestimentosPage() {
   const [form, setForm] = useState({
     ativo: "",
     tipo: "renda_fixa",
-    valor_aportado: 0,
-    valor_atual: 0,
+    valor_aportado: "", // 🔧 ALTERADO: number -> string
+    valor_atual: "",    // 🔧 ALTERADO: number -> string
     data_aporte: new Date().toISOString().slice(0, 10),
     observacao: "",
   });
@@ -52,8 +52,8 @@ export default function InvestimentosPage() {
     setForm({
       ativo: "",
       tipo: "renda_fixa",
-      valor_aportado: 0,
-      valor_atual: 0,
+      valor_aportado: "",
+      valor_atual: "",
       data_aporte: new Date().toISOString().slice(0, 10),
       observacao: "",
     });
@@ -63,13 +63,24 @@ export default function InvestimentosPage() {
   async function salvarInvestimento(e: React.FormEvent) {
     e.preventDefault();
     if (!form.ativo.trim()) return alert("Digite o nome do ativo.");
-    if (form.valor_aportado <= 0) return alert("Informe o valor aportado.");
+
+    // 🔧 ALTERADO: conversão de string (com vírgula) para número
+    const valorAportado = parseFloat(String(form.valor_aportado).replace(",", ".")) || 0;
+    const valorAtual = parseFloat(String(form.valor_atual).replace(",", ".")) || 0;
+
+    if (valorAportado <= 0) return alert("Informe o valor aportado.");
+
+    const payload = {
+      ...form,
+      valor_aportado: valorAportado, // 🔧 ALTERADO
+      valor_atual: valorAtual,       // 🔧 ALTERADO
+    };
 
     if (editando) {
-      const { error } = await supabase.from("investimentos").update(form).eq("id", editando.id);
+      const { error } = await supabase.from("investimentos").update(payload).eq("id", editando.id);
       if (error) return alert("Erro: " + error.message);
     } else {
-      const { error } = await supabase.from("investimentos").insert([form]);
+      const { error } = await supabase.from("investimentos").insert([payload]);
       if (error) return alert("Erro: " + error.message);
     }
 
@@ -82,8 +93,8 @@ export default function InvestimentosPage() {
     setForm({
       ativo: inv.ativo,
       tipo: inv.tipo,
-      valor_aportado: inv.valor_aportado,
-      valor_atual: inv.valor_atual,
+      valor_aportado: String(inv.valor_aportado ?? ""), // 🔧 ALTERADO
+      valor_atual: String(inv.valor_atual ?? ""),        // 🔧 ALTERADO
       data_aporte: inv.data_aporte.slice(0, 10),
       observacao: inv.observacao || "",
     });
@@ -101,15 +112,15 @@ export default function InvestimentosPage() {
   }, [investimentos, filtroTipo]);
 
   // Totais gerais
-  const totalAportado = investimentosFiltrados.reduce((s, i) => s + i.valor_aportado, 0);
-  const totalAtual = investimentosFiltrados.reduce((s, i) => s + i.valor_atual, 0);
+  const totalAportado = investimentosFiltrados.reduce((s, i) => s + Number(i.valor_aportado || 0), 0);
+  const totalAtual = investimentosFiltrados.reduce((s, i) => s + Number(i.valor_atual || 0), 0);
   const rentabilidadeTotal = totalAtual - totalAportado;
   const pctRentabilidade = totalAportado > 0 ? (rentabilidadeTotal / totalAportado) * 100 : 0;
 
   // Distribuição por tipo (para o "gráfico" simples de barras)
   const distribuicaoPorTipo = Object.keys(TIPO_CONFIG).map((tipo) => {
     const items = investimentos.filter((i) => i.tipo === tipo);
-    const total = items.reduce((s, i) => s + i.valor_atual, 0);
+    const total = items.reduce((s, i) => s + Number(i.valor_atual || 0), 0);
     return { tipo, total, config: TIPO_CONFIG[tipo] };
   }).filter((d) => d.total > 0);
 
@@ -205,16 +216,28 @@ export default function InvestimentosPage() {
 
         <div>
           <label className="text-sm text-[var(--texto-secundario)] block mb-1">Valor aportado (R$)</label>
-          <input type="text" inputMode="decimal" value={form.valor_aportado} ... />
-            onChange={(e) => setForm({ ...form, valor_aportado: e.target.value.replace(/[^0-9,]/g, "") })
-            className="w-full bg-[var(--azul-escuro)] border border-[rgba(0,200,255,0.2)] rounded-lg px-3 py-2 text-sm" />
+          {/* 🔧 ALTERADO: input corrigido (estava com JSX inválido) */}
+          <input
+            type="text"
+            inputMode="decimal"
+            value={form.valor_aportado}
+            onChange={(e) => setForm({ ...form, valor_aportado: e.target.value.replace(/[^0-9,]/g, "") })}
+            placeholder="0,00"
+            className="w-full bg-[var(--azul-escuro)] border border-[rgba(0,200,255,0.2)] rounded-lg px-3 py-2 text-sm"
+          />
         </div>
 
         <div>
           <label className="text-sm text-[var(--texto-secundario)] block mb-1">Valor atual (R$)</label>
-         <input type="text" inputMode="decimal" value={form.valor_atual} ... />
-            onChange={(e) => setForm({ ...form, valor_atual: e.target.value.replace(/[^0-9,]/g, "") })
-            className="w-full bg-[var(--azul-escuro)] border border-[rgba(0,200,255,0.2)] rounded-lg px-3 py-2 text-sm" />
+          {/* 🔧 ALTERADO: input corrigido (estava com JSX inválido) */}
+          <input
+            type="text"
+            inputMode="decimal"
+            value={form.valor_atual}
+            onChange={(e) => setForm({ ...form, valor_atual: e.target.value.replace(/[^0-9,]/g, "") })}
+            placeholder="0,00"
+            className="w-full bg-[var(--azul-escuro)] border border-[rgba(0,200,255,0.2)] rounded-lg px-3 py-2 text-sm"
+          />
         </div>
 
         <div>
@@ -243,8 +266,10 @@ export default function InvestimentosPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {investimentosFiltrados.map((inv) => {
-            const rentabilidade = inv.valor_atual - inv.valor_aportado;
-            const pct = inv.valor_aportado > 0 ? (rentabilidade / inv.valor_aportado) * 100 : 0;
+            const valorAportadoNum = Number(inv.valor_aportado || 0); // 🔧 ALTERADO
+            const valorAtualNum = Number(inv.valor_atual || 0);       // 🔧 ALTERADO
+            const rentabilidade = valorAtualNum - valorAportadoNum;
+            const pct = valorAportadoNum > 0 ? (rentabilidade / valorAportadoNum) * 100 : 0;
             const config = TIPO_CONFIG[inv.tipo];
 
             return (
@@ -257,10 +282,10 @@ export default function InvestimentosPage() {
                 </div>
 
                 <p className="text-sm text-[var(--texto-secundario)]">
-                  Aportado: R$ {inv.valor_aportado.toLocaleString("pt-BR")}
+                  Aportado: R$ {valorAportadoNum.toLocaleString("pt-BR")}
                 </p>
                 <p className="text-sm text-[var(--texto-secundario)]">
-                  Atual: R$ {inv.valor_atual.toLocaleString("pt-BR")}
+                  Atual: R$ {valorAtualNum.toLocaleString("pt-BR")}
                 </p>
                 <p className="text-sm font-semibold mt-1" style={{ color: rentabilidade >= 0 ? "#22c55e" : "#ef4444" }}>
                   {rentabilidade >= 0 ? "+" : ""}R$ {rentabilidade.toLocaleString("pt-BR")} ({pct.toFixed(1)}%)
