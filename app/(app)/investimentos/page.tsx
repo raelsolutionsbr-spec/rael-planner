@@ -205,8 +205,8 @@ export default function InvestimentosPage() {
 
         <div>
           <label className="text-sm text-[var(--texto-secundario)] block mb-1">Valor aportado (R$)</label>
-          <input type="number" step="0.01" value={form.valor_aportado}
-            onChange={(e) => setForm({ ...form, valor_aportado: Number(e.target.value) })}
+          <input type="text" inputMode="decimal" value={form.valor_aportado} ... />
+            onChange={(e) => setForm({ ...form, valor_aportado: e.target.value.replace(/[^0-9,]/g, "") })
             className="w-full bg-[var(--azul-escuro)] border border-[rgba(0,200,255,0.2)] rounded-lg px-3 py-2 text-sm" />
         </div>
 
