@@ -192,11 +192,9 @@ export default function EmpresasPage() {
           <label className="text-sm text-[var(--texto-secundario)] block mb-1">
             Meta mensal (R$)
           </label>
-          <input
-            type="number"
-            value={form.meta_mensal}
+          <input type="text" inputMode="decimal" value={form.meta_mensal} ... />
             onChange={(e) =>
-              setForm({ ...form, meta_mensal: Number(e.target.value) })
+              setForm({ ...form, meta_mensal: e.target.value.replace(/[^0-9,]/g, "") })
             }
             className="w-full bg-[var(--azul-escuro)] border border-[rgba(0,200,255,0.2)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--azul-neon)]"
           />
