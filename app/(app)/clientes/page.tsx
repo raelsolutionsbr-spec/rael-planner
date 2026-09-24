@@ -222,8 +222,9 @@ export default function ClientesPage() {
 
         <div>
           <label className="text-sm text-[var(--texto-secundario)] block mb-1">Valor contrato (R$)</label>
-          <input type="number" value={form.valor_contrato}
-            onChange={(e) => setForm({ ...form, valor_contrato: Number(e.target.value) })}
+          <input type="text" inputMode="decimal" value={form.valor_contrato} ... />
+          onChange={(e) => setForm({ ...form, valor_contrato: e.target.value.replace(/[^0-9,]/g, "") })
+
             className="w-full bg-[var(--azul-escuro)] border border-[rgba(0,200,255,0.2)] rounded-lg px-3 py-2 text-sm" />
         </div>
 
