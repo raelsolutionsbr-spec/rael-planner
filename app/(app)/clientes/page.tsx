@@ -39,7 +39,7 @@ export default function ClientesPage() {
     telefone: "",
     email: "",
     status: "lead",
-    valor_contrato: 0,
+    valor_contrato: "", // 🔧 ALTERADO: era 0, agora string vazia
     ultima_interacao: new Date().toISOString().slice(0, 10),
     proximo_followup: "",
     observacoes: "",
@@ -69,7 +69,7 @@ export default function ClientesPage() {
       telefone: "",
       email: "",
       status: "lead",
-      valor_contrato: 0,
+      valor_contrato: "", // 🔧 ALTERADO
       ultima_interacao: new Date().toISOString().slice(0, 10),
       proximo_followup: "",
       observacoes: "",
@@ -82,7 +82,12 @@ export default function ClientesPage() {
     if (!form.nome.trim()) return alert("Digite o nome do cliente.");
     if (!form.empresa_id) return alert("Cadastre uma empresa primeiro.");
 
-    const payload = { ...form, proximo_followup: form.proximo_followup || null };
+    // 🔧 ALTERADO: conversão de valor_contrato de string (com vírgula) para número
+    const payload = {
+      ...form,
+      valor_contrato: parseFloat(String(form.valor_contrato).replace(",", ".")) || 0,
+      proximo_followup: form.proximo_followup || null,
+    };
 
     if (editando) {
       const { error } = await supabase.from("clientes").update(payload).eq("id", editando.id);
@@ -104,7 +109,7 @@ export default function ClientesPage() {
       telefone: c.telefone || "",
       email: c.email || "",
       status: c.status,
-      valor_contrato: c.valor_contrato,
+      valor_contrato: String(c.valor_contrato ?? ""), // 🔧 ALTERADO: number -> string para exibir no input
       ultima_interacao: c.ultima_interacao?.slice(0, 10) || "",
       proximo_followup: c.proximo_followup?.slice(0, 10) || "",
       observacoes: c.observacoes || "",
@@ -222,10 +227,15 @@ export default function ClientesPage() {
 
         <div>
           <label className="text-sm text-[var(--texto-secundario)] block mb-1">Valor contrato (R$)</label>
-          <input type="text" inputMode="decimal" value={form.valor_contrato} ... />
-          onChange={(e) => setForm({ ...form, valor_contrato: e.target.value.replace(/[^0-9,]/g, "") })
-
-            className="w-full bg-[var(--azul-escuro)] border border-[rgba(0,200,255,0.2)] rounded-lg px-3 py-2 text-sm" />
+          {/* 🔧 ALTERADO: input estava quebrado (JSX inválido). Corrigido abaixo */}
+          <input
+            type="text"
+            inputMode="decimal"
+            value={form.valor_contrato}
+            onChange={(e) => setForm({ ...form, valor_contrato: e.target.value.replace(/[^0-9,]/g, "") })}
+            placeholder="0,00"
+            className="w-full bg-[var(--azul-escuro)] border border-[rgba(0,200,255,0.2)] rounded-lg px-3 py-2 text-sm"
+          />
         </div>
 
         <div>
@@ -289,8 +299,9 @@ export default function ClientesPage() {
                 {c.email && <p className="text-sm text-[var(--texto-secundario)]">✉️ {c.email}</p>}
 
                 <p className="text-sm mt-2">
-                  Contrato: <span className="text-white">R$ {c.valor_contrato?.toLocaleString("pt-BR")}</span>
+                  Contrato: <span className="text-white">R$ {Number(c.valor_contrato || 0).toLocaleString("pt-BR")}</span>
                 </p>
+                {/* 🔧 ALTERADO: Number() protege contra valor não numérico */}
 
                 {frio && (
                   <p className="text-xs mt-2 px-2 py-1 rounded-lg bg-[rgba(239,68,68,0.15)] text-[var(--vermelho-alerta)] inline-block">
