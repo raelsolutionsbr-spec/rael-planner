@@ -20,7 +20,7 @@ export default function EmpresasPage() {
     nome: "",
     tipo: "propria",
     cor_tema: "#00c8ff",
-    meta_mensal: 0,
+    meta_mensal: "", // 🔧 ALTERADO: era 0, agora string vazia
   });
 
   async function carregarEmpresas() {
@@ -40,7 +40,7 @@ export default function EmpresasPage() {
   }, []);
 
   function resetForm() {
-    setForm({ nome: "", tipo: "propria", cor_tema: "#00c8ff", meta_mensal: 0 });
+    setForm({ nome: "", tipo: "propria", cor_tema: "#00c8ff", meta_mensal: "" }); // 🔧 ALTERADO
     setEditando(null);
   }
 
@@ -51,6 +51,9 @@ export default function EmpresasPage() {
       alert("Digite o nome da empresa.");
       return;
     }
+
+    // 🔧 ALTERADO: conversão de meta_mensal de string (com vírgula) para número
+    const metaConvertida = parseFloat(String(form.meta_mensal).replace(",", ".")) || 0;
 
     // 1. Pega o usuário logado
     const {
@@ -69,7 +72,7 @@ export default function EmpresasPage() {
           nome: form.nome,
           tipo: form.tipo,
           cor_tema: form.cor_tema,
-          meta_mensal: form.meta_mensal,
+          meta_mensal: metaConvertida, // 🔧 ALTERADO
         })
         .eq("id", editando.id);
 
@@ -83,7 +86,7 @@ export default function EmpresasPage() {
           nome: form.nome,
           tipo: form.tipo,
           cor_tema: form.cor_tema,
-          meta_mensal: form.meta_mensal,
+          meta_mensal: metaConvertida, // 🔧 ALTERADO
           user_id: user.id,
         },
       ]);
@@ -104,7 +107,7 @@ export default function EmpresasPage() {
       nome: empresa.nome,
       tipo: empresa.tipo,
       cor_tema: empresa.cor_tema,
-      meta_mensal: empresa.meta_mensal,
+      meta_mensal: String(empresa.meta_mensal ?? ""), // 🔧 ALTERADO: number -> string
     });
   }
 
@@ -192,10 +195,15 @@ export default function EmpresasPage() {
           <label className="text-sm text-[var(--texto-secundario)] block mb-1">
             Meta mensal (R$)
           </label>
-          <input type="text" inputMode="decimal" value={form.meta_mensal} ... />
+          {/* 🔧 ALTERADO: input estava quebrado (JSX inválido). Corrigido abaixo */}
+          <input
+            type="text"
+            inputMode="decimal"
+            value={form.meta_mensal}
             onChange={(e) =>
               setForm({ ...form, meta_mensal: e.target.value.replace(/[^0-9,]/g, "") })
             }
+            placeholder="0,00"
             className="w-full bg-[var(--azul-escuro)] border border-[rgba(0,200,255,0.2)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--azul-neon)]"
           />
         </div>
@@ -256,8 +264,9 @@ export default function EmpresasPage() {
               <p className="text-sm text-[var(--texto-secundario)] mb-4">
                 Meta mensal:{" "}
                 <span className="text-white">
-                  R$ {empresa.meta_mensal.toLocaleString("pt-BR")}
+                  R$ {Number(empresa.meta_mensal || 0).toLocaleString("pt-BR")}
                 </span>
+                {/* 🔧 ALTERADO: Number() protege contra valor não numérico */}
               </p>
 
               <div className="flex gap-2">
